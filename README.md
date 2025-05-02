@@ -1,0 +1,8 @@
+- naming convensions (short namings)
+- slnx
+- project structure
+- vertical slice architecture
+- tunit
+- tactical ddd
+- tdd
+- ubiquitous language
