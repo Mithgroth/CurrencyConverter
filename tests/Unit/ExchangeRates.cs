@@ -33,7 +33,7 @@ public class ExchangeRates
         };
 
         // Act
-        var exchangeRate = new ExchangeRate(baseCurrency, date, rates);
+        var exchangeRate = new Domain.ExchangeRates(baseCurrency, date, rates);
 
         // Assert
         await Assert.That(exchangeRate.BaseCurrency).IsEqualTo(baseCurrency);
@@ -48,7 +48,7 @@ public class ExchangeRates
     public async Task ThrowsOnEmptyRawRates()
     {
         await Assert.That(() =>
-                new ExchangeRate(
+                new Domain.ExchangeRates(
                     new Currency("EUR"),
                     DateOnly.FromDateTime(DateTime.Today),
                     new Dictionary<Currency, decimal>())
