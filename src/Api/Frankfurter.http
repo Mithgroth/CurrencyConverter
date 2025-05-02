@@ -1,0 +1,37 @@
+@Frankfurter_Base = https://api.frankfurter.dev/v1
+
+### Fetch the latest working day's rates
+GET {{Frankfurter_Base}}/latest
+Accept: application/json
+
+### Change the base currency using the base parameter
+GET {{Frankfurter_Base}}/latest?base=USD
+Accept: application/json
+
+### Limit the response to specific target currencies
+GET {{Frankfurter_Base}}/latest?symbols=CHF,GBP
+Accept: application/json
+
+### Retrieve rates for a specific past date
+GET {{Frankfurter_Base}}/1999-01-04
+Accept: application/json
+
+### Retrieve rates for a specific past date with filter
+GET {{Frankfurter_Base}}/1999-01-04?base=USD&symbols=EUR
+Accept: application/json
+
+### Fetch rates over a period
+GET {{Frankfurter_Base}}/2000-01-01..2000-12-31
+Accept: application/json
+
+### Fetch rates up to the present
+GET {{Frankfurter_Base}}/2024-01-01..
+Accept: application/json
+
+### Fetch rates up to the present with filter
+GET {{Frankfurter_Base}}/2024-01-01..?symbols=USD
+Accept: application/json
+
+### Available currencies
+GET {{Frankfurter_Base}}/currencies
+Accept: application/json
