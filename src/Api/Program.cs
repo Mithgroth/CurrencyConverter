@@ -1,3 +1,4 @@
+using Api.Features.Currencies;
 using Api.Features.Rates;
 using Api.Providers;
 using Frankfurter = Api.Providers.Frankfurter;
@@ -24,6 +25,7 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.MapRatesEndpoints();
+app.MapCurrenciesEndpoints();
 
 app.Run();
 
