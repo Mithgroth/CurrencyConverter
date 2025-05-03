@@ -15,7 +15,7 @@ public class Rates
         var client = WebApplicationFactory.CreateClient();
 
         // Act
-        var response = await client.GetAsync("/api/rates");
+        var response = await client.GetAsync("/api/rates"); // TODO: Add query parameters
 
         var json = await response.Content.ReadAsStringAsync();
         var parsed = JsonSerializer.Deserialize<ExchangeRatesResponse>(json, JsonSerializerOptions.Web)!;
