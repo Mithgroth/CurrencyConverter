@@ -3,37 +3,21 @@ using Domain;
 
 namespace Api.Features.Rates;
 
-public class Service(IExchangeRateProvider provider)
+public class Service(Resolver resolver)
 {
-    public async Task<List<ExchangeRatesResponse>> GetPagedAsync(
-        string baseCurrency, DateOnly from, DateOnly to,
-        int page, int pageSize,
-        CancellationToken cancellationToken)
+    public async Task<ExchangeRates> GetLatest(string baseCurrency, string providerName, CancellationToken ct)
     {
-        var businessDays = GetBusinessDays(from, to);
-        var pagedDays = businessDays
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .ToList();
-
-        if (!pagedDays.Any())
-        {
-            return [];
-        }
-
-        var min = pagedDays.First();
-        var max = pagedDays.Last();
-
-        var domain = await provider.GetHistorical(
-            new Currency(baseCurrency), min, max, cancellationToken);
-
-        return domain
-            .Where(r => pagedDays.Contains(r.Date))
-            .OrderBy(r => r.Date)
-            .Select(r => new ExchangeRatesResponse(r))
-            .ToList();
+        var provider = resolver.Get(providerName);
+        return await provider.GetLatest(new Currency(baseCurrency), ct);
     }
 
+    public async Task<List<ExchangeRates>> GetHistorical(string baseCurrency, DateOnly from, DateOnly to, string providerName, CancellationToken ct)
+    {
+        var provider = resolver.Get(providerName);
+        return await provider.GetHistorical(new Currency(baseCurrency), from, to, ct);
+    }
+
+    // TODO: You stay for pagination
     private static List<DateOnly> GetBusinessDays(DateOnly from, DateOnly to)
     {
         var days = new List<DateOnly>();

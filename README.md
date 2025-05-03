@@ -9,10 +9,11 @@
 - "/api/rates" is more REST than "/api/rates/latest" which is RPC
 - no CQRS since we don't know our storage options
 - models are not designed for EF, they have no parameterless constructors
-- no overabstraction, not everything needs an interface
+- no overabstraction, not everything needs an interface, "Implement dependency injection for service abstractions" --> Newton-King's tweet
 - improvement: mention Delta nuget if used Postgres
 - assumption: skipped bank holiday validation for brevity (like 1.1.2020)
 - improvement: add bank holiday validation
 - assumption: rate conversion happens on latest rates, no dates included, spec does not specify this
 - resilience: polly used for circuit breaker and retry
 - caching is based on MemoryCache for horizontal scaling
+- factory pattern is implemented with resolver because traditional factory pattern fundamentally violates open/closed principle, does not scale well with enum value matching, has a lot of boilerplate code and tightly-coupled

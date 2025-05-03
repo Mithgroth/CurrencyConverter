@@ -4,12 +4,17 @@ using Api.Providers;
 using Polly;
 using Polly.Extensions.Http;
 using Frankfurter = Api.Providers.Frankfurter;
+using Resolver = Api.Providers.Resolver;
+using Rates = Api.Features.Rates;
+using Currencies = Api.Features.Currencies;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
 
 services.AddOpenApi();
 services.AddMemoryCache();
+
+services.AddScoped<Resolver>();
 services
     .AddHttpClient("Frankfurter", client => { client.BaseAddress = new Uri("https://api.frankfurter.dev"); })
     .AddPolicyHandler(HttpPolicyExtensions
@@ -26,6 +31,8 @@ services
         ));
 
 services.AddScoped<IExchangeRateProvider, Frankfurter.Provider>();
+services.AddScoped<Rates.Service>();
+services.AddScoped<Currencies.Service>();
 
 var app = builder.Build();
 

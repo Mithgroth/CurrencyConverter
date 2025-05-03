@@ -6,6 +6,8 @@ namespace Api.Providers.Frankfurter;
 
 public class Provider(IHttpClientFactory httpClientFactory, IMemoryCache cache) : IExchangeRateProvider
 {
+    public string Name => "Frankfurter";
+
     public async Task<ExchangeRates> GetLatest(
         Currency baseCurrency,
         CancellationToken cancellationToken = default)

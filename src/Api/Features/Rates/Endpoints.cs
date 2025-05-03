@@ -1,5 +1,4 @@
-﻿using Api.Providers;
-using Domain;
+﻿using Domain;
 
 namespace Api.Features.Rates;
 
@@ -8,15 +7,21 @@ public static class Endpoints
     public static WebApplication MapRatesEndpoints(this WebApplication app)
     {
         app.MapGet("/api/rates", async (
+                HttpRequest httpRequest,
                 [AsParameters] ExchangeRatesRequest request,
-                IExchangeRateProvider provider,
-                CancellationToken cancellationToken
-            ) =>
+                Service service,
+                CancellationToken cancellationToken) =>
             {
+                var providerName = httpRequest.GetProviderName();
+
                 try
                 {
-                    var result = await provider.GetLatest(new Currency(request.BaseCurrency), cancellationToken);
+                    var result = await service.GetLatest(request.BaseCurrency, providerName, cancellationToken);
                     return Results.Ok(new ExchangeRatesResponse(result));
+                }
+                catch (KeyNotFoundException)
+                {
+                    return Results.BadRequest($"Unknown exchange rate provider: '{providerName}'");
                 }
                 catch (ArgumentException ex)
                 {
@@ -30,19 +35,21 @@ public static class Endpoints
             .Produces(StatusCodes.Status500InternalServerError);
 
         app.MapGet("/api/rates/historical", async (
+                HttpRequest httpRequest,
                 [AsParameters] HistoricalRatesRequest request,
-                IExchangeRateProvider provider,
+                Service service,
                 CancellationToken cancellationToken) =>
             {
+                var providerName = httpRequest.GetProviderName();
+
                 try
                 {
-                    var result = await provider.GetHistorical(
-                        new Currency(request.Base),
-                        request.From,
-                        request.To,
-                        cancellationToken);
-
+                    var result = await service.GetHistorical(request.Base, request.From, request.To, providerName, cancellationToken);
                     return Results.Ok(new HistoricalRatesResponse(result));
+                }
+                catch (KeyNotFoundException)
+                {
+                    return Results.BadRequest($"Unknown exchange rate provider: '{providerName}'");
                 }
                 catch (ArgumentException ex)
                 {
@@ -56,5 +63,12 @@ public static class Endpoints
             .Produces(StatusCodes.Status500InternalServerError);
 
         return app;
+    }
+
+    private static string GetProviderName(this HttpRequest httpRequest)
+    {
+        return httpRequest.Headers.TryGetValue("X-Exchange-Provider", out var header)
+            ? header.ToString()
+            : "frankfurter";
     }
 }

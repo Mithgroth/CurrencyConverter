@@ -1,39 +1,25 @@
-﻿using Api.Providers;
-using Domain;
-
-namespace Api.Features.Currencies;
+﻿namespace Api.Features.Currencies;
 
 public static class Endpoints
 {
     public static WebApplication MapCurrenciesEndpoints(this WebApplication app)
     {
         app.MapPost("/api/currencies/convert", async (
+                HttpRequest httpRequest,
                 ConvertCurrencyRequest request,
-                IExchangeRateProvider provider,
+                Service service,
                 CancellationToken cancellationToken) =>
             {
+                var providerName = httpRequest.GetProviderName();
+
                 try
                 {
-                    var sourceCurrency = new Currency(request.From);
-                    var targetCurrency = new Currency(request.To);
-
-                    var exchangeRates = await provider.GetLatest(sourceCurrency, cancellationToken);
-                    var blacklist = new HashSet<Currency>();
-
-                    var convertedAmount = sourceCurrency.Convert(
-                        target: targetCurrency,
-                        amount: request.Amount,
-                        exchangeRates: exchangeRates,
-                        blacklist: blacklist);
-
-                    var response = new ConvertCurrencyResponse(
-                        From: sourceCurrency.Code,
-                        To: targetCurrency.Code,
-                        Amount: request.Amount,
-                        Rate: exchangeRates.Rates[targetCurrency],
-                        ConvertedAmount: convertedAmount);
-
+                    var response = await service.ConvertCurrency(request, providerName, cancellationToken);
                     return Results.Ok(response);
+                }
+                catch (KeyNotFoundException)
+                {
+                    return Results.BadRequest($"Unknown exchange rate provider: '{providerName}'");
                 }
                 catch (ArgumentException ex)
                 {
@@ -57,5 +43,12 @@ public static class Endpoints
             .Produces(StatusCodes.Status500InternalServerError);
 
         return app;
+    }
+
+    private static string GetProviderName(this HttpRequest httpRequest)
+    {
+        return httpRequest.Headers.TryGetValue("X-Exchange-Provider", out var header)
+            ? header.ToString()
+            : "frankfurter";
     }
 }
