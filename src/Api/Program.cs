@@ -1,9 +1,8 @@
+using Api;
 using Api.Features.Currencies;
 using Api.Features.Rates;
 using Api.Providers;
 using Microsoft.AspNetCore.Mvc;
-using Polly;
-using Polly.Extensions.Http;
 using Frankfurter = Api.Providers.Frankfurter;
 using Resolver = Api.Providers.Resolver;
 using Rates = Api.Features.Rates;
@@ -11,10 +10,17 @@ using Currencies = Api.Features.Currencies;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
+var configuration = builder.Configuration;
+
+configuration
+    .AddJsonFile("appsettings.json")
+    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
+    .AddEnvironmentVariables();
+
+services.Configure<ProvidersOptions>(configuration.GetSection("Providers"));
 
 services.AddOpenApi();
 services.AddMemoryCache();
-
 services.AddApiVersioning(options =>
 {
     options.DefaultApiVersion = new ApiVersion(1, 0);
@@ -23,22 +29,9 @@ services.AddApiVersioning(options =>
 });
 
 services.AddScoped<Resolver>();
-services
-    .AddHttpClient("Frankfurter", client => { client.BaseAddress = new Uri("https://api.frankfurter.dev"); })
-    .AddPolicyHandler(HttpPolicyExtensions
-        .HandleTransientHttpError()
-        .WaitAndRetryAsync(3, retryAttempt =>
-            TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)) +
-            TimeSpan.FromMilliseconds(Random.Shared.Next(0, 100))
-        ))
-    .AddPolicyHandler(HttpPolicyExtensions
-        .HandleTransientHttpError()
-        .CircuitBreakerAsync(
-            handledEventsAllowedBeforeBreaking: 5,
-            durationOfBreak: TimeSpan.FromSeconds(5)
-        ));
-
+services.AddProviderHttpClients(configuration);
 services.AddScoped<IExchangeRateProvider, Frankfurter.Provider>();
+
 services.AddScoped<Rates.Service>();
 services.AddScoped<Currencies.Service>();
 
