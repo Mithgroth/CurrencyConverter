@@ -29,6 +29,32 @@ public static class Endpoints
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status500InternalServerError);
 
+        app.MapGet("/api/rates/historical", async (
+                [AsParameters] HistoricalRatesRequest request,
+                IExchangeRateProvider provider,
+                CancellationToken cancellationToken) =>
+            {
+                try
+                {
+                    var result = await provider.GetHistorical(
+                        new Currency(request.Base),
+                        request.From,
+                        request.To,
+                        cancellationToken);
+
+                    return Results.Ok(new HistoricalRatesResponse(result));
+                }
+                catch (ArgumentException ex)
+                {
+                    return Results.Problem(title: "Argument Exception", detail: ex.Message);
+                }
+            })
+            .WithName("GetHistoricalRates")
+            .WithTags("Rates")
+            .Produces<HistoricalRatesResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status500InternalServerError);
+
         return app;
     }
 }

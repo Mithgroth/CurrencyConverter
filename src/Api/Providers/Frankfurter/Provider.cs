@@ -14,7 +14,23 @@ public class Provider(IHttpClientFactory httpClientFactory) : IExchangeRateProvi
         response.EnsureSuccessStatusCode();
 
         var json = await response.Content.ReadAsStringAsync(cancellationToken);
-        var parsed = JsonSerializer.Deserialize<FrankfurterLatestResponse>(json, JsonSerializerOptions.Web)!;
+        var parsed = JsonSerializer.Deserialize<FrankfurterLatestResponse>(json, FrankfurterJsonOptions.Options)!;
+        return parsed.ToDomain();
+    }
+
+    public async Task<List<ExchangeRates>> GetHistorical(
+        Currency baseCurrency,
+        DateOnly from,
+        DateOnly to,
+        CancellationToken cancellationToken = default)
+    {
+        var httpClient = httpClientFactory.CreateClient("Frankfurter");
+        var url = $"/v1/{from:yyyy-MM-dd}..{to:yyyy-MM-dd}?base={baseCurrency.Code}";
+        var response = await httpClient.GetAsync(url, cancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        var json = await response.Content.ReadAsStringAsync(cancellationToken);
+        var parsed = JsonSerializer.Deserialize<FrankfurterHistoricalRatesResponse>(json, FrankfurterJsonOptions.Options)!;
         return parsed.ToDomain();
     }
 }
