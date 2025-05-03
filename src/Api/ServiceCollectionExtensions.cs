@@ -1,6 +1,8 @@
 ﻿using Api.Providers;
 using Polly;
+using Polly.CircuitBreaker;
 using Polly.Extensions.Http;
+using Polly.Retry;
 
 namespace Api;
 
@@ -9,17 +11,16 @@ public static class ServiceCollectionExtensions
     /// <summary>
     /// Just for easier plumbing.
     /// </summary>
-    public static IServiceCollection AddProviderHttpClients(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddProviderHttpClients(this IServiceCollection services,
+        IConfiguration configuration)
     {
         var section = configuration.GetSection("Providers");
-        var providers = section.Get<Dictionary<string, ProviderConfig>>() ?? new();
+        var providers = section.Get<Dictionary<string, ProviderConfig>>() ?? new Dictionary<string, ProviderConfig>();
 
         foreach (var (name, config) in providers)
         {
-            services.AddHttpClient(name, client =>
-                {
-                    client.BaseAddress = new Uri(config.BaseUrl);
-                })
+            services.AddHttpClient(name, client => { client.BaseAddress = new Uri(config.BaseUrl); })
+                .AddHttpMessageHandler<CorrelationIdHandler>()
                 .AddPolicyHandler(GetRetryPolicy())
                 .AddPolicyHandler(GetCircuitBreakerPolicy());
         }
@@ -27,7 +28,7 @@ public static class ServiceCollectionExtensions
         return services;
     }
 
-    private static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
+    private static AsyncRetryPolicy<HttpResponseMessage> GetRetryPolicy()
     {
         return HttpPolicyExtensions
             .HandleTransientHttpError()
@@ -37,7 +38,7 @@ public static class ServiceCollectionExtensions
             );
     }
 
-    private static IAsyncPolicy<HttpResponseMessage> GetCircuitBreakerPolicy()
+    private static AsyncCircuitBreakerPolicy<HttpResponseMessage> GetCircuitBreakerPolicy()
     {
         return HttpPolicyExtensions
             .HandleTransientHttpError()
