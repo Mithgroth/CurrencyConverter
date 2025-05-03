@@ -6,3 +6,10 @@
 - tactical ddd
 - tdd
 - ubiquitous language
+- "/api/rates" is more REST than "/api/rates/latest" which is RPC
+- no CQRS since we don't know our storage options
+- models are not designed for EF, they have no parameterless constructors
+- no overabstraction, not everything needs an interface
+- improvement: mention Delta nuget if used Postgres
+- assumption: skipped bank holiday validation for brevity (like 1.1.2020)
+- improvement: add bank holiday validation
