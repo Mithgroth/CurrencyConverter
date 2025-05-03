@@ -1,14 +1,19 @@
+using System.Text;
 using Api;
+using Api.Features.Auth;
 using Api.Features.Currencies;
 using Api.Features.Rates;
 using Api.Middlewares;
 using Api.Providers;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using Serilog;
-using Frankfurter = Api.Providers.Frankfurter;
-using Resolver = Api.Providers.Resolver;
-using Rates = Api.Features.Rates;
+using Auth = Api.Features.Auth;
 using Currencies = Api.Features.Currencies;
+using Frankfurter = Api.Providers.Frankfurter;
+using Rates = Api.Features.Rates;
+using Resolver = Api.Providers.Resolver;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
@@ -38,6 +43,34 @@ services.AddApiVersioning(options =>
     options.ReportApiVersions = true;
 });
 
+services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        var issuer = configuration["Jwt:Issuer"]
+                     ?? throw new InvalidOperationException("JWT Issuer is not configured.");
+        var audience = configuration["Jwt:Audience"]
+                       ?? throw new InvalidOperationException("JWT Audience is not configured.");
+        var key = configuration["Jwt:Key"]
+                  ?? throw new InvalidOperationException("JWT Key is not configured.");
+
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = issuer,
+            ValidAudience = audience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key))
+        };
+    });
+services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminPolicy", policy =>
+        policy.RequireRole("Admin"));
+});
+
+
 services.AddHttpContextAccessor();
 services.AddTransient<CorrelationIdHandler>();
 
@@ -45,8 +78,9 @@ services.AddProviderHttpClients(configuration);
 services.AddScoped<Resolver>();
 services.AddScoped<IExchangeRateProvider, Frankfurter.Provider>();
 
-services.AddScoped<Rates.Service>();
+services.AddScoped<Auth.Service>();
 services.AddScoped<Currencies.Service>();
+services.AddScoped<Rates.Service>();
 
 var app = builder.Build();
 
@@ -59,9 +93,12 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
 
-app.MapRatesEndpoints();
+app.MapAuthEndpoints();
 app.MapCurrenciesEndpoints();
+app.MapRatesEndpoints();
 
 app.Run();
 

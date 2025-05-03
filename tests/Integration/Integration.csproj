@@ -9,6 +9,7 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="9.0.4"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.4" />
         <PackageReference Include="TUnit" Version="0.19.52"/>
     </ItemGroup>
 

@@ -38,6 +38,7 @@ public static class Endpoints
                         statusCode: StatusCodes.Status500InternalServerError);
                 }
             })
+            .RequireAuthorization(policy => policy.RequireRole("FinancialExpert"))
             .WithName("ConvertCurrency")
             .WithTags("Currencies")
             .Produces<ConvertCurrencyResponse>(StatusCodes.Status200OK)

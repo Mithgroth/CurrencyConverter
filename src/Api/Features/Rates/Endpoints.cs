@@ -30,6 +30,7 @@ public static class Endpoints
                     return Results.Problem(title: "Argument Exception", detail: ex.Message);
                 }
             })
+            .RequireAuthorization(policy => policy.RequireRole("Intern", "FinancialExpert"))
             .WithName("GetLatestRates")
             .WithTags("Rates")
             .Produces<ExchangeRates>(StatusCodes.Status200OK)
@@ -58,6 +59,7 @@ public static class Endpoints
                     return Results.Problem(title: "Argument Exception", detail: ex.Message);
                 }
             })
+            .RequireAuthorization(policy => policy.RequireRole("FinancialExpert"))
             .WithName("GetHistoricalRates")
             .WithTags("Rates")
             .Produces<HistoricalRatesResponse>(StatusCodes.Status200OK)
