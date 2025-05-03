@@ -1,8 +1,10 @@
 using Api;
 using Api.Features.Currencies;
 using Api.Features.Rates;
+using Api.Middlewares;
 using Api.Providers;
 using Microsoft.AspNetCore.Mvc;
+using Serilog;
 using Frankfurter = Api.Providers.Frankfurter;
 using Resolver = Api.Providers.Resolver;
 using Rates = Api.Features.Rates;
@@ -11,6 +13,14 @@ using Currencies = Api.Features.Currencies;
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
 var configuration = builder.Configuration;
+
+Log.Logger = new LoggerConfiguration()
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    //.WriteTo.Seq("<Seq URL>")
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 
 configuration
     .AddJsonFile("appsettings.json")
@@ -28,8 +38,11 @@ services.AddApiVersioning(options =>
     options.ReportApiVersions = true;
 });
 
-services.AddScoped<Resolver>();
+services.AddHttpContextAccessor();
+services.AddTransient<CorrelationIdHandler>();
+
 services.AddProviderHttpClients(configuration);
+services.AddScoped<Resolver>();
 services.AddScoped<IExchangeRateProvider, Frankfurter.Provider>();
 
 services.AddScoped<Rates.Service>();
@@ -37,7 +50,9 @@ services.AddScoped<Currencies.Service>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+app.UseMiddleware<CorrelationId>();
+app.UseMiddleware<RequestLogging>();
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
