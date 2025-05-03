@@ -13,3 +13,5 @@
 - improvement: mention Delta nuget if used Postgres
 - assumption: skipped bank holiday validation for brevity (like 1.1.2020)
 - improvement: add bank holiday validation
+- assumption: rate conversion happens on latest rates, no dates included, spec does not specify this
+- resilience: polly used for circuit breaker and retry

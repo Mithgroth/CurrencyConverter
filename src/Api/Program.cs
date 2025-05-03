@@ -1,16 +1,28 @@
 using Api.Features.Currencies;
 using Api.Features.Rates;
 using Api.Providers;
+using Polly;
+using Polly.Extensions.Http;
 using Frankfurter = Api.Providers.Frankfurter;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
 
 services.AddOpenApi();
-services.AddHttpClient("Frankfurter", client =>
-{
-    client.BaseAddress = new Uri("https://api.frankfurter.dev");
-});
+builder.Services
+    .AddHttpClient("Frankfurter", client => { client.BaseAddress = new Uri("https://api.frankfurter.dev"); })
+    .AddPolicyHandler(HttpPolicyExtensions
+        .HandleTransientHttpError()
+        .WaitAndRetryAsync(3, retryAttempt =>
+            TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)) +
+            TimeSpan.FromMilliseconds(Random.Shared.Next(0, 100))
+        ))
+    .AddPolicyHandler(HttpPolicyExtensions
+        .HandleTransientHttpError()
+        .CircuitBreakerAsync(
+            handledEventsAllowedBeforeBreaking: 5,
+            durationOfBreak: TimeSpan.FromSeconds(5)
+        ));
 
 services.AddScoped<IExchangeRateProvider, Frankfurter.Provider>();
 
