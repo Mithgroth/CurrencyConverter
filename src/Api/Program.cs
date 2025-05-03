@@ -1,6 +1,7 @@
 using Api.Features.Currencies;
 using Api.Features.Rates;
 using Api.Providers;
+using Microsoft.AspNetCore.Mvc;
 using Polly;
 using Polly.Extensions.Http;
 using Frankfurter = Api.Providers.Frankfurter;
@@ -13,6 +14,13 @@ var services = builder.Services;
 
 services.AddOpenApi();
 services.AddMemoryCache();
+
+services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+});
 
 services.AddScoped<Resolver>();
 services

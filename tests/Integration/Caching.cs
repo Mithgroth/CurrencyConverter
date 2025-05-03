@@ -25,9 +25,9 @@ public class Caching
         var client = app.CreateClient();
 
         // Act
-        var res1 = await client.GetAsync("/api/rates");
-        var res2 = await client.GetAsync("/api/rates");
-        var res3 = await client.GetAsync("/api/rates");
+        var res1 = await client.GetAsync("/api/v1/rates");
+        var res2 = await client.GetAsync("/api/v1/rates");
+        var res3 = await client.GetAsync("/api/v1/rates");
 
         // Assert
         await Assert.That(res1.StatusCode).IsEqualTo(HttpStatusCode.OK);

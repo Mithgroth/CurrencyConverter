@@ -22,7 +22,7 @@ public class Currencies
         };
 
         // Act
-        var response = await client.PostAsJsonAsync("/api/currencies/convert", request);
+        var response = await client.PostAsJsonAsync("/api/v1/currencies/convert", request);
         var result = await response.Content.ReadFromJsonAsync<ConvertCurrencyResponse>();
 
         // Assert

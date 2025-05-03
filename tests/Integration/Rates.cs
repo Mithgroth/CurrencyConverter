@@ -15,7 +15,7 @@ public class Rates
         var client = WebApplicationFactory.CreateClient();
 
         // Act
-        var response = await client.GetAsync("/api/rates"); // TODO: Add query parameters
+        var response = await client.GetAsync("/api/v1/rates"); // TODO: Add query parameters
 
         var json = await response.Content.ReadAsStringAsync();
         var parsed = JsonSerializer.Deserialize<ExchangeRatesResponse>(json, JsonSerializerOptions.Web)!;
@@ -55,7 +55,7 @@ public class Rates
         const int page = 1;
         const int pageSize = 5;
 
-        var url = $"/api/rates/historical" +
+        var url = $"/api/v1/rates/historical" +
                   $"?base={baseCurrency}" +
                   $"&from={from:yyyy-MM-dd}" +
                   $"&to={to:yyyy-MM-dd}" +

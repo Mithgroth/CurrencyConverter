@@ -19,7 +19,7 @@ public class Resolver
             Amount = 100.0
         };
 
-        var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/api/currencies/convert")
+        var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/api/v1/currencies/convert")
         {
             Content = JsonContent.Create(request)
         };

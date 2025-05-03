@@ -6,7 +6,9 @@ public static class Endpoints
 {
     public static WebApplication MapRatesEndpoints(this WebApplication app)
     {
-        app.MapGet("/api/rates", async (
+        var v1 = app.MapGroup("/api/v1");
+
+        v1.MapGet("/rates", async (
                 HttpRequest httpRequest,
                 [AsParameters] ExchangeRatesRequest request,
                 Service service,
@@ -34,7 +36,7 @@ public static class Endpoints
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status500InternalServerError);
 
-        app.MapGet("/api/rates/historical", async (
+        v1.MapGet("/rates/historical", async (
                 HttpRequest httpRequest,
                 [AsParameters] HistoricalRatesRequest request,
                 Service service,

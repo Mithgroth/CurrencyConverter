@@ -4,7 +4,9 @@ public static class Endpoints
 {
     public static WebApplication MapCurrenciesEndpoints(this WebApplication app)
     {
-        app.MapPost("/api/currencies/convert", async (
+        var v1 = app.MapGroup("/api/v1");
+
+        v1.MapPost("/currencies/convert", async (
                 HttpRequest httpRequest,
                 ConvertCurrencyRequest request,
                 Service service,
