@@ -1,6 +1,5 @@
 ﻿using Api.Providers;
 using Domain;
-using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Features.Rates;
 
@@ -9,13 +8,14 @@ public static class Endpoints
     public static WebApplication MapRatesEndpoints(this WebApplication app)
     {
         app.MapGet("/api/rates", async (
+                [AsParameters] ExchangeRatesRequest request,
                 IExchangeRateProvider provider,
-                CancellationToken cancellationToken,
-                [FromQuery] string baseCurrency = "EUR") =>
+                CancellationToken cancellationToken
+            ) =>
             {
                 try
                 {
-                    var result = await provider.GetLatest(new Currency(baseCurrency), cancellationToken);
+                    var result = await provider.GetLatest(new Currency(request.BaseCurrency), cancellationToken);
                     return Results.Ok(new ExchangeRatesResponse(result));
                 }
                 catch (ArgumentException ex)

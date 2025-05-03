@@ -3,6 +3,8 @@ using Domain;
 
 namespace Api.Features.Rates;
 
+public sealed record ExchangeRatesRequest(string BaseCurrency = "EUR");
+
 public sealed record ExchangeRatesResponse
 {
     [JsonConstructor]
