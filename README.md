@@ -15,3 +15,4 @@
 - improvement: add bank holiday validation
 - assumption: rate conversion happens on latest rates, no dates included, spec does not specify this
 - resilience: polly used for circuit breaker and retry
+- caching is based on MemoryCache for horizontal scaling

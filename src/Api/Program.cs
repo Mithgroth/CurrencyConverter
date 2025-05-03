@@ -9,7 +9,8 @@ var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
 
 services.AddOpenApi();
-builder.Services
+services.AddMemoryCache();
+services
     .AddHttpClient("Frankfurter", client => { client.BaseAddress = new Uri("https://api.frankfurter.dev"); })
     .AddPolicyHandler(HttpPolicyExtensions
         .HandleTransientHttpError()
