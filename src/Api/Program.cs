@@ -1,8 +1,17 @@
-var builder = WebApplication.CreateBuilder(args);
+using Api.Features.Rates;
+using Api.Providers;
+using Frankfurter = Api.Providers.Frankfurter;
 
-// Add services to the container.
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
+var builder = WebApplication.CreateBuilder(args);
+var services = builder.Services;
+
+services.AddOpenApi();
+services.AddHttpClient("Frankfurter", client =>
+{
+    client.BaseAddress = new Uri("https://api.frankfurter.dev");
+});
+
+services.AddScoped<IExchangeRateProvider, Frankfurter.Provider>();
 
 var app = builder.Build();
 
@@ -13,6 +22,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.MapRatesEndpoints();
 
 app.Run();
 
