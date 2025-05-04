@@ -1,4 +1,5 @@
 using System.Text;
+using System.Threading.RateLimiting;
 using Api;
 using Api.Features.Auth;
 using Api.Features.Currencies;
@@ -41,6 +42,26 @@ services.AddApiVersioning(options =>
     options.DefaultApiVersion = new ApiVersion(1, 0);
     options.AssumeDefaultVersionWhenUnspecified = true;
     options.ReportApiVersions = true;
+});
+
+services.AddRateLimiter(options =>
+{
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.User.Identity?.Name ?? httpContext.Request.Headers.Host.ToString(),
+            factory: partition => new FixedWindowRateLimiterOptions
+            {
+                AutoReplenishment = true,
+                PermitLimit = 10,
+                QueueLimit = 0,
+                Window = TimeSpan.FromMinutes(1)
+            }));
+
+    options.OnRejected = async (context, token) =>
+    {
+        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        await context.HttpContext.Response.WriteAsync("Rate limit exceeded", token);
+    };
 });
 
 services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -86,6 +107,7 @@ var app = builder.Build();
 
 app.UseMiddleware<CorrelationId>();
 app.UseMiddleware<RequestLogging>();
+app.UseRateLimiter();
 
 if (app.Environment.IsDevelopment())
 {
