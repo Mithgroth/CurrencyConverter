@@ -1,4 +1,5 @@
-using Domain;
+﻿using Domain;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Features.Rates;
 
@@ -10,15 +11,19 @@ public static class Endpoints
 
         v1.MapGet("/rates", async (
                 HttpRequest httpRequest,
-                [AsParameters] ExchangeRatesRequest request,
+                [FromQuery] string? baseCurrency,
                 Service service,
                 CancellationToken cancellationToken) =>
             {
                 var providerName = httpRequest.GetProviderName();
+                if (string.IsNullOrWhiteSpace(baseCurrency))
+                {
+                    baseCurrency = "EUR";
+                }
 
                 try
                 {
-                    var result = await service.GetLatest(request.BaseCurrency, providerName, cancellationToken);
+                    var result = await service.GetLatest(baseCurrency, providerName, cancellationToken);
                     return Results.Ok(new ExchangeRatesResponse(result));
                 }
                 catch (KeyNotFoundException)
@@ -27,7 +32,10 @@ public static class Endpoints
                 }
                 catch (ArgumentException ex)
                 {
-                    return Results.Problem(title: "Argument Exception", detail: ex.Message);
+                    return Results.ValidationProblem(new Dictionary<string, string[]>
+                    {
+                        { "BaseCurrency", new[] { ex.Message } }
+                    });
                 }
             })
             .RequireAuthorization(policy => policy.RequireRole("Intern", "FinancialExpert"))
@@ -69,6 +77,7 @@ public static class Endpoints
                     }
                 })
             .RequireAuthorization(policy => policy.RequireRole("FinancialExpert"))
+            .WithValidation<HistoricalRatesRequest>()
             .WithName("GetHistoricalRates")
             .WithTags("Rates")
             .Produces<HistoricalRatesResponse>(StatusCodes.Status200OK)

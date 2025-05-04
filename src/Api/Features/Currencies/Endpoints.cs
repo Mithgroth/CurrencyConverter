@@ -42,6 +42,7 @@ public static class Endpoints
                 }
             })
             .RequireAuthorization(policy => policy.RequireRole("FinancialExpert"))
+            .WithValidation<ConvertCurrencyRequest>()
             .WithName("ConvertCurrency")
             .WithTags("Currencies")
             .Produces<ConvertCurrencyResponse>(StatusCodes.Status200OK)

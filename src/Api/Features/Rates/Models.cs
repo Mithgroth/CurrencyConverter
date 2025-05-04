@@ -4,8 +4,6 @@ using Domain;
 
 namespace Api.Features.Rates;
 
-public sealed record ExchangeRatesRequest(string BaseCurrency = "EUR");
-
 public sealed record ExchangeRatesResponse
 {
     [JsonConstructor]
@@ -37,20 +35,23 @@ public sealed record ExchangeRatesResponse
 public sealed record HistoricalRatesRequest
 {
     [Required]
+    [StringLength(3, MinimumLength = 3, ErrorMessage = "Currency code must be 3 letters.")]
+    [RegularExpression("^[a-zA-Z]{3}$", ErrorMessage = "Currency code must contain only letters.")]
     public string Base { get; init; } = "EUR";
 
     [Required]
-    public DateOnly From { get; init; }
+    public DateOnly? From { get; init; }
 
     [Required]
-    public DateOnly To { get; init; }
+    public DateOnly? To { get; init; }
 
-    [Range(1, int.MaxValue)]
+    [Range(1, int.MaxValue, ErrorMessage = "Page must be 1 or greater.")]
     public int Page { get; init; } = 1;
 
-    [Range(1, 100)]
+    [Range(1, 100, ErrorMessage = "PageSize must be between 1 and 100.")]
     public int PageSize { get; init; } = 10;
 }
+
 
 public sealed record HistoricalRatesResponse
 {
