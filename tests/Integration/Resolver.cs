@@ -17,7 +17,7 @@ public class Resolver : TestBase
             Amount = 100.0
         };
 
-        var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/api/v1/currencies/convert")
+        var httpRequest = new HttpRequestMessage(HttpMethod.Post, "/api/v1/currencies/conversion")
         {
             Content = JsonContent.Create(request)
         };

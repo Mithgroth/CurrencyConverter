@@ -62,7 +62,7 @@ public class Auth : TestBase
         };
 
         // Act
-        var response = await client.PostAsJsonAsync("/api/v1/currencies/convert", request);
+        var response = await client.PostAsJsonAsync("/api/v1/currencies/conversion", request);
 
         // Assert
         await Assert.That(response.StatusCode).IsEqualTo(expectedStatusCode);

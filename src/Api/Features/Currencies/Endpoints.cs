@@ -8,7 +8,7 @@ public static class Endpoints
     {
         var v1 = app.MapGroup("/api/v1");
 
-        v1.MapPost("/currencies/convert", async (
+        v1.MapPost("/currencies/conversion", async (
                 HttpRequest httpRequest,
                 ConvertCurrencyRequest request,
                 Service service,

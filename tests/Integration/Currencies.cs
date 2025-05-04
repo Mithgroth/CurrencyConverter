@@ -24,7 +24,7 @@ public class Currencies : TestBase
         };
 
         // Act
-        var response = await client.PostAsJsonAsync("/api/v1/currencies/convert", request);
+        var response = await client.PostAsJsonAsync("/api/v1/currencies/conversion", request);
         var result = await response.Content.ReadFromJsonAsync<ConvertCurrencyResponse>();
 
         // Assert
@@ -63,8 +63,8 @@ public class Currencies : TestBase
             };
 
             // Act
-            var responseFrom = await client.PostAsJsonAsync("/api/v1/currencies/convert", requestFrom);
-            var responseTo = await client.PostAsJsonAsync("/api/v1/currencies/convert", requestTo);
+            var responseFrom = await client.PostAsJsonAsync("/api/v1/currencies/conversion", requestFrom);
+            var responseTo = await client.PostAsJsonAsync("/api/v1/currencies/conversion", requestTo);
 
             // Assert
             await Assert.That(responseFrom.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
@@ -86,7 +86,7 @@ public class Currencies : TestBase
             Amount = 0 // invalid: less than min (0.01)
         };
 
-        var response = await client.PostAsJsonAsync("/api/v1/currencies/convert", request);
+        var response = await client.PostAsJsonAsync("/api/v1/currencies/conversion", request);
         var json = await response.Content.ReadAsStringAsync();
 
         var problem = JsonSerializer.Deserialize<ValidationProblemDetails>(
