@@ -1,5 +1,8 @@
-﻿using System.Net.Http.Json;
+﻿using System.Net;
+using System.Net.Http.Json;
 using Api.Features.Currencies;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Integration;
 
@@ -34,4 +37,39 @@ public class Currencies
         await Assert.That(result.Rate).IsGreaterThan(0);
         await Assert.That(result.ConvertedAmount).IsEqualTo(result.Amount * result.Rate).Within(0.01m);
     }
+
+    [Test]
+    public async Task Blacklist()
+    {
+        // Arrange
+        var client = WebApplicationFactory.CreateClient();
+        var config = WebApplicationFactory.Services.GetRequiredService<IConfiguration>();
+        var blacklisted = config.GetSection("CurrencyOptions:BlacklistedCurrencies").Get<List<string>>()!;
+
+        foreach (var currency in blacklisted)
+        {
+            var requestFrom = new ConvertCurrencyRequest
+            {
+                From = currency,
+                To = "USD",
+                Amount = 100m
+            };
+
+            var requestTo = new ConvertCurrencyRequest
+            {
+                From = "USD",
+                To = currency,
+                Amount = 100m
+            };
+
+            // Act
+            var responseFrom = await client.PostAsJsonAsync("/api/v1/currencies/convert", requestFrom);
+            var responseTo = await client.PostAsJsonAsync("/api/v1/currencies/convert", requestTo);
+
+            // Assert
+            await Assert.That(responseFrom.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+            await Assert.That(responseTo.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+        }
+    }
+
 }

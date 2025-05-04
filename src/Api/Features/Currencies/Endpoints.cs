@@ -1,4 +1,6 @@
-﻿namespace Api.Features.Currencies;
+﻿using Microsoft.Extensions.Options;
+
+namespace Api.Features.Currencies;
 
 public static class Endpoints
 {
@@ -10,13 +12,14 @@ public static class Endpoints
                 HttpRequest httpRequest,
                 ConvertCurrencyRequest request,
                 Service service,
+                IOptions<CurrencyOptions> options,
                 CancellationToken cancellationToken) =>
             {
                 var providerName = httpRequest.GetProviderName();
 
                 try
                 {
-                    var response = await service.ConvertCurrency(request, providerName, cancellationToken);
+                    var response = await service.ConvertCurrency(request, providerName, options, cancellationToken);
                     return Results.Ok(response);
                 }
                 catch (KeyNotFoundException)

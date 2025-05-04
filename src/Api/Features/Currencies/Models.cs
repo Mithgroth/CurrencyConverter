@@ -2,6 +2,11 @@
 
 namespace Api.Features.Currencies;
 
+public sealed record CurrencyOptions
+{
+    public List<string> BlacklistedCurrencies { get; init; } = new();
+}
+
 public sealed record ConvertCurrencyRequest
 {
     [Required] public string From { get; init; } = string.Empty;

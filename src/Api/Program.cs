@@ -34,6 +34,7 @@ configuration
     .AddEnvironmentVariables();
 
 services.Configure<ProvidersOptions>(configuration.GetSection("Providers"));
+services.Configure<CurrencyOptions>(configuration.GetSection("CurrencyOptions"));
 
 services.AddOpenApi();
 services.AddMemoryCache();
