@@ -9,7 +9,10 @@ using Api.Providers;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Serilog;
+using Serilog.Enrichers.Span;
 using Auth = Api.Features.Auth;
 using Currencies = Api.Features.Currencies;
 using Frankfurter = Api.Providers.Frankfurter;
@@ -23,6 +26,8 @@ var configuration = builder.Configuration;
 Log.Logger = new LoggerConfiguration()
     .Enrich.FromLogContext()
     .WriteTo.Console()
+    .Enrich.WithProperty("Service", "CurrencyConverter.API")
+    .Enrich.WithSpan()
     //.WriteTo.Seq("<Seq URL>")
     .CreateLogger();
 
@@ -33,6 +38,17 @@ configuration
     .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
     .AddEnvironmentVariables();
 
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracerProviderBuilder =>
+    {
+        tracerProviderBuilder
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddConsoleExporter() // Grafana in production?
+            .SetResourceBuilder(
+                ResourceBuilder.CreateDefault()
+                    .AddService("CurrencyConverter.API"));
+    });
 services.Configure<ProvidersOptions>(configuration.GetSection("Providers"));
 services.Configure<CurrencyOptions>(configuration.GetSection("CurrencyOptions"));
 
