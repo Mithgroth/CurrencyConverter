@@ -6,12 +6,14 @@ namespace Integration;
 
 public class Resolver
 {
+    [ClassDataSource<WebApplicationFactory>(Shared = SharedType.PerTestSession)]
+    public required WebApplicationFactory WebApplicationFactory { get; init; }
+
     [Test]
     public async Task FailsForUnknownProvider()
     {
         // Arrange
-        var app = new WebApplicationFactory<Program>();
-        var client = app.CreateClient();
+        var client = WebApplicationFactory.CreateClient();
         var request = new
         {
             From = "USD",

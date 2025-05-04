@@ -1,5 +1,4 @@
 ﻿using System.Net;
-using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -7,20 +6,18 @@ namespace Integration;
 
 public class Caching
 {
+    [ClassDataSource<WebApplicationFactory>(Shared = SharedType.PerTestSession)]
+    public required WebApplicationFactory WebApplicationFactory { get; init; }
+
     [Test]
     public async Task CanHit()
     {
         // Arrange
         var cache = new TrackingMemoryCache();
-
-        var app = new WebApplicationFactory<Program>()
-            .WithWebHostBuilder(builder =>
-            {
-                builder.ConfigureServices(services =>
-                {
-                    services.AddSingleton<IMemoryCache>(_ => cache); // override real cache
-                });
-            });
+        var app = WebApplicationFactory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services => { services.AddSingleton<IMemoryCache>(_ => cache); });
+        });
 
         var client = app.CreateClient();
 
