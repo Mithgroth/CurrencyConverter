@@ -37,7 +37,7 @@ public sealed record HistoricalRatesRequest
     [Required]
     [StringLength(3, MinimumLength = 3, ErrorMessage = "Currency code must be 3 letters.")]
     [RegularExpression("^[a-zA-Z]{3}$", ErrorMessage = "Currency code must contain only letters.")]
-    public string Base { get; init; } = "EUR";
+    public string BaseCurrency { get; init; } = "EUR";
 
     [Required]
     public DateOnly? From { get; init; }

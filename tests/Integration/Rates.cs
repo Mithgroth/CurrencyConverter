@@ -64,7 +64,7 @@ public class Rates : TestBase
         const int pageSize = 5;
 
         var url = $"/api/v1/rates/historical" +
-                  $"?base={baseCurrency}" +
+                  $"?baseCurrency={baseCurrency}" +
                   $"&from={from:yyyy-MM-dd}" +
                   $"&to={to:yyyy-MM-dd}" +
                   $"&page={page}" +
@@ -125,7 +125,7 @@ public class Rates : TestBase
 
         var requestParams = new Dictionary<string, string>
         {
-            ["base"] = "EUR",
+            ["baseCurrency"] = "EUR",
             ["from"] = "2025-04-06",
             ["to"] = "2025-04-20",
             ["page"] = "2",

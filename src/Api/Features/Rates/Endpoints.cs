@@ -58,7 +58,7 @@ public static class Endpoints
                     {
                         var result =
                             await service.GetHistorical(
-                                request.Base,
+                                request.BaseCurrency,
                                 request.From!.Value,
                                 request.To!.Value,
                                 request.Page,
