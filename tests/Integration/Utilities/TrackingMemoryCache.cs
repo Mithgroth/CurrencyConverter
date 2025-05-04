@@ -1,6 +1,6 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
 
-namespace Integration;
+namespace Integration.Utilities;
 
 /// <summary>
 /// A simple memory cache wrapper that tracks hits and misses.

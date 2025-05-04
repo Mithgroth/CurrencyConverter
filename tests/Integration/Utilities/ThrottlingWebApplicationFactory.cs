@@ -5,19 +5,11 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
-using TUnit.Core.Interfaces;
 
-namespace Integration;
+namespace Integration.Utilities;
 
-public class WebApplicationFactory : WebApplicationFactory<Program>, IAsyncInitializer
+public class ThrottlingWebApplicationFactory : WebApplicationFactory<Program>
 {
-    public Task InitializeAsync()
-    {
-        _ = Server;
-
-        return Task.CompletedTask;
-    }
-
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
@@ -25,7 +17,8 @@ public class WebApplicationFactory : WebApplicationFactory<Program>, IAsyncIniti
         {
             services.RemoveAll<IConfigureOptions<JwtBearerOptions>>();
             services.AddAuthentication("Test")
-                .AddScheme<AuthenticationSchemeOptions, TestHandlers.Auth>("Test", _ => { });
+                .AddScheme<AuthenticationSchemeOptions, TestHandlers.Auth>(
+                    "Test", _ => { });
         });
     }
 }

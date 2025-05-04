@@ -1,14 +1,12 @@
 ﻿using System.Net;
+using Integration.Utilities;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Integration;
 
-public class Caching
+public class Caching : TestBase
 {
-    [ClassDataSource<WebApplicationFactory>(Shared = SharedType.PerTestSession)]
-    public required WebApplicationFactory WebApplicationFactory { get; init; }
-
     [Test]
     public async Task CanHit()
     {

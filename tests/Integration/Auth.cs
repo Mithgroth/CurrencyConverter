@@ -10,11 +10,8 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Integration;
 
-public class Auth
+public class Auth : TestBase
 {
-    [ClassDataSource<WebApplicationFactory>(Shared = SharedType.PerTestSession)]
-    public required WebApplicationFactory WebApplicationFactory { get; init; }
-
     [Test]
     public async Task CanLogin()
     {
@@ -54,6 +51,7 @@ public class Auth
     {
         // Arrange
         var client = WebApplicationFactory.CreateClient();
+        client.DefaultRequestHeaders.Remove("X-Test-Role");
         client.DefaultRequestHeaders.Add("X-Test-Role", role);
 
         var request = new ConvertCurrencyRequest

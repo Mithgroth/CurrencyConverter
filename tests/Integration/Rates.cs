@@ -1,13 +1,14 @@
-﻿using System.Text.Json;
+﻿using System.Net;
+using System.Net.Http.Json;
+using System.Text.Json;
+using Api;
 using Api.Features.Rates;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Integration;
 
-public class Rates
+public class Rates : TestBase
 {
-    [ClassDataSource<WebApplicationFactory>(Shared = SharedType.PerTestSession)]
-    public required WebApplicationFactory WebApplicationFactory { get; init; }
-
     [Test]
     public async Task GetLatest()
     {
@@ -16,6 +17,13 @@ public class Rates
 
         // Act
         var response = await client.GetAsync("/api/v1/rates"); // TODO: Add query parameters
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var body = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"Status: {response.StatusCode}, Body: {body}");
+            Assert.Fail("Request did not succeed.");
+        }
 
         var json = await response.Content.ReadAsStringAsync();
         var parsed = JsonSerializer.Deserialize<ExchangeRatesResponse>(json, JsonSerializerOptions.Web)!;
@@ -62,19 +70,25 @@ public class Rates
                   $"&page={page}" +
                   $"&pageSize={pageSize}";
 
-        var expectedDates = GetBusinessDays(from, to);
+        var expectedDates = GetBusinessDays(from, to)
+            .OrderBy(d => d)
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
 
         // Act
         var response = await client.GetAsync(url);
         var json = await response.Content.ReadAsStringAsync();
-        var parsed = JsonSerializer.Deserialize<HistoricalRatesResponse>(json, JsonSerializerOptions.Web)!;
+        var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+        options.Converters.Add(new DateOnlyJsonConverter());
+        var parsed = JsonSerializer.Deserialize<HistoricalRatesResponse>(json, options)!;
 
         // Assert
+        await Assert.That(response.IsSuccessStatusCode).IsTrue();
         await Assert.That(parsed).IsNotNull();
         await Assert.That(parsed.BaseCurrency).IsEqualTo(baseCurrency);
         await Assert.That(parsed.Rates).IsNotEmpty();
 
-        // Ensure each expected business date is present in the returned Rates
         foreach (var expectedDate in expectedDates)
         {
             var key = expectedDate.ToString("yyyy-MM-dd");
@@ -101,5 +115,102 @@ public class Rates
         }
 
         return days;
+    }
+
+    [Test]
+    public async Task HistoricalPagination()
+    {
+        // Arrange
+        var client = WebApplicationFactory.CreateClient();
+
+        var requestParams = new Dictionary<string, string>
+        {
+            ["base"] = "EUR",
+            ["from"] = "2025-04-06",
+            ["to"] = "2025-04-20",
+            ["page"] = "2",
+            ["pageSize"] = "3"
+        };
+
+        var query = string.Join("&", requestParams.Select(kv => $"{kv.Key}={kv.Value}"));
+        var url = $"/api/v1/rates/historical?{query}";
+
+        // Act
+        var response = await client.GetAsync(url);
+        var json = await response.Content.ReadAsStringAsync();
+        var options = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+        options.Converters.Add(new DateOnlyJsonConverter());
+        var parsed = JsonSerializer.Deserialize<HistoricalRatesResponse>(json, options)!;
+
+        // Assert
+        await Assert.That(response.IsSuccessStatusCode).IsTrue();
+        await Assert.That(parsed).IsNotNull();
+        await Assert.That(parsed!.Rates.Count).IsEqualTo(3);
+
+        var sortedDates = parsed.Rates
+            .Keys
+            .Select(DateOnly.Parse)
+            .OrderBy(d => d)
+            .ToList();
+
+
+        await Assert.That(sortedDates.Count).IsEqualTo(3);
+
+        foreach (var date in sortedDates)
+        {
+            await Assert.That(date.DayOfWeek is not DayOfWeek.Saturday and not DayOfWeek.Sunday).IsTrue();
+        }
+
+        await Assert.That(sortedDates.First()).IsEqualTo(new DateOnly(2025, 4, 9));
+        await Assert.That(sortedDates.Last()).IsEqualTo(new DateOnly(2025, 4, 11));
+    }
+
+    // Validation tests
+    [Test]
+    public async Task GetLatest_InvalidBaseCurrency_ReturnsBadRequest()
+    {
+        // Arrange
+        var client = WebApplicationFactory.CreateClient();
+        var url = "/api/v1/rates?baseCurrency=E"; // Invalid: too short
+
+        // Act
+        var response = await client.GetAsync(url);
+        var problem = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>();
+
+        // Assert
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+        await Assert.That(problem).IsNotNull();
+        await Assert.That(problem!.Errors["BaseCurrency"]).IsNotEmpty();
+    }
+
+    [Test]
+    public async Task GetHistorical_MissingToDate_ReturnsBadRequest()
+    {
+        // Arrange
+        var client = WebApplicationFactory.CreateClient();
+        var url = "/api/v1/rates/historical?base=EUR&from=2020-01-01&page=1&pageSize=5"; // Missing "to" date
+
+        // Act
+        var response = await client.GetAsync(url);
+        var contentType = response.Content.Headers.ContentType?.MediaType;
+        var body = await response.Content.ReadAsStringAsync();
+
+        // Assert
+        await Assert.That(response.StatusCode).IsEqualTo(HttpStatusCode.BadRequest);
+        await Assert.That(body).IsNotEmpty();
+
+        if (contentType == "application/json")
+        {
+            var problem = JsonSerializer.Deserialize<ValidationProblemDetails>(body,
+                new JsonSerializerOptions(JsonSerializerDefaults.Web))!;
+
+            await Assert.That(problem.Errors.Keys).Contains("To");
+            await Assert.That(problem.Errors["To"]).IsNotEmpty();
+        }
+        else
+        {
+            // Fallback: plain string body with error message
+            await Assert.That(body).Contains("To", StringComparison.OrdinalIgnoreCase);
+        }
     }
 }

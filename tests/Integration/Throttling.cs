@@ -1,11 +1,12 @@
 ﻿using System.Net;
+using Integration.Utilities;
 
 namespace Integration;
 
 public class Throttling
 {
-    [ClassDataSource<WebApplicationFactory>(Shared = SharedType.PerTestSession)]
-    public required WebApplicationFactory WebApplicationFactory { get; init; }
+    [ClassDataSource<ThrottlingWebApplicationFactory>(Shared = SharedType.PerTestSession)]
+    public required ThrottlingWebApplicationFactory WebApplicationFactory { get; init; }
 
     [Test]
     public async Task CanLimitWith429()

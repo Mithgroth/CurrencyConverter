@@ -14,8 +14,10 @@ public class Auth(
 {
     protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
-        var role = Request.Headers["X-Test-Role"].FirstOrDefault() ?? "FinancialExpert";
-        var name = Request.Headers["X-Test-Name"].FirstOrDefault() ?? "TestUser";
+        var headers = Request.Headers;
+        var role   = headers["X-Test-Role"].FirstOrDefault() ?? "FinancialExpert";
+        var name   = headers["X-Test-Name"].FirstOrDefault()
+                     ?? $"TestUser-{Guid.NewGuid():N}";
 
         var claims = new[]
         {

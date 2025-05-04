@@ -1,14 +1,10 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
-using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace Integration;
 
-public class Resolver
+public class Resolver : TestBase
 {
-    [ClassDataSource<WebApplicationFactory>(Shared = SharedType.PerTestSession)]
-    public required WebApplicationFactory WebApplicationFactory { get; init; }
-
     [Test]
     public async Task FailsForUnknownProvider()
     {

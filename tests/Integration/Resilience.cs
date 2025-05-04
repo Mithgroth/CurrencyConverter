@@ -7,7 +7,7 @@ using Polly.CircuitBreaker;
 
 namespace Integration;
 
-public class Resilience
+public class Resilience : TestBase
 {
     private readonly AlwaysFail _alwaysFailHandler = new();
     private readonly TwoFailOneSuccess _twoFailOneSuccessHandler = new();
