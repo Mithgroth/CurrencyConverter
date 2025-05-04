@@ -1,4 +1,4 @@
-﻿using Domain;
+using Domain;
 
 namespace Api.Features.Rates;
 
@@ -37,28 +37,37 @@ public static class Endpoints
             .Produces(StatusCodes.Status400BadRequest)
             .Produces(StatusCodes.Status500InternalServerError);
 
-        v1.MapGet("/rates/historical", async (
-                HttpRequest httpRequest,
-                [AsParameters] HistoricalRatesRequest request,
-                Service service,
-                CancellationToken cancellationToken) =>
-            {
-                var providerName = httpRequest.GetProviderName();
+        v1.MapGet("/rates/historical",
+                async (
+                    HttpRequest httpRequest,
+                    [AsParameters] HistoricalRatesRequest request,
+                    Service service,
+                    CancellationToken cancellationToken) =>
+                {
+                    var providerName = httpRequest.GetProviderName();
 
-                try
-                {
-                    var result = await service.GetHistorical(request.Base, request.From, request.To, providerName, cancellationToken);
-                    return Results.Ok(new HistoricalRatesResponse(result));
-                }
-                catch (KeyNotFoundException)
-                {
-                    return Results.BadRequest($"Unknown exchange rate provider: '{providerName}'");
-                }
-                catch (ArgumentException ex)
-                {
-                    return Results.Problem(title: "Argument Exception", detail: ex.Message);
-                }
-            })
+                    try
+                    {
+                        var result =
+                            await service.GetHistorical(
+                                request.Base,
+                                request.From!.Value,
+                                request.To!.Value,
+                                request.Page,
+                                request.PageSize,
+                                providerName,
+                                cancellationToken);
+                        return Results.Ok(new HistoricalRatesResponse(result));
+                    }
+                    catch (KeyNotFoundException)
+                    {
+                        return Results.BadRequest($"Unknown exchange rate provider: '{providerName}'");
+                    }
+                    catch (ArgumentException ex)
+                    {
+                        return Results.Problem(title: "Argument Exception", detail: ex.Message);
+                    }
+                })
             .RequireAuthorization(policy => policy.RequireRole("FinancialExpert"))
             .WithName("GetHistoricalRates")
             .WithTags("Rates")
